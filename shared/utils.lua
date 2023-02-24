@@ -29,3 +29,14 @@ RandomLoot = function(loot)
 
 	return items
 end
+
+
+---@param msg string
+---@param source? integer
+SendNotification = function(msg, source)
+	if IsDuplicityVersion() then
+		TriggerClientEvent('esx:showNotification', source, msg)
+	else
+		ESX.ShowNotification(msg)
+	end
+end

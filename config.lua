@@ -8,6 +8,16 @@ Config.HandsUp = {
     Command = 'glz:handsup'
 }
 
+Config.Carry = {
+    Enable = true,
+    Command = 'carry'
+}
+
+Config.Shuff = {
+    Enable = true,
+    Command = 'shuff'
+}
+
 Config.ReviveTime = 10 * 1000 -- How long will takes to revive player in milliseconds
 
 ---@type table<string, { name: string, countMin: integer, countMax: integer, percentage: integer}[]>

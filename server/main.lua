@@ -9,6 +9,35 @@ RegisterNetEvent('glz_interaction:revivePlayer', function(target)
     TriggerClientEvent('esx_ambulancejob:revive', target)
 end)
 
+RegisterNetEvent('glz_interaction:carryPlayer', function(target)
+	local source = source
+	local sourceCoords = GetEntityCoords(GetPlayerPed(source))
+	local targetCoords = GetEntityCoords(GetPlayerPed(target))
+	local sourceState = Player(source).state
+	local targetState = Player(target).state
+
+	if #(sourceCoords - targetCoords) > 2.0 or source == target or sourceState.carried then return end
+
+	if targetState.carried then
+		TriggerClientEvent('glz_interaction:carryOff', source)
+		TriggerClientEvent('glz_interaction:carryOff', target)
+	else
+		TriggerClientEvent('glz_interaction:carrySource', source, target)
+		TriggerClientEvent('glz_interaction:carryTarget', target, source)
+	end
+end)
+
+RegisterNetEvent('glz_interaction:put_in_vehicle', function(target, netId)
+    local source = source
+    if not Player(target).state.carried then return end
+    TriggerClientEvent('glz_interaction:carryOff', target)
+    TriggerClientEvent('glz_interaction:carryOff', source)
+    TriggerClientEvent('glz_interaction:put_in_vehicle', target, netId)
+end)
+RegisterNetEvent('glz_interaction:take_out_vehicle', function(target, netId)
+    TaskLeaveVehicle(GetPlayerPed(target), NetworkGetEntityFromNetworkId(netId), 0)
+end)
+
 
 Loots = {}
 local Inventory = exports.ox_inventory:GetInventory()

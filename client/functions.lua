@@ -1,19 +1,29 @@
+---Requests animation dictionary and plays the animation immediately after
+---@param dict string
+---@param anim string
+---@param duration integer
+---@param flag integer
 PlayAnim = function(dict, anim, duration, flag)
+    CurrentAnimation.Dict, CurrentAnimation.Anim, CurrentAnimation.Duration, CurrentAnimation.Flag = dict, anim, duration, flag
+
     if not HasAnimDictLoaded(dict) then
         RequestAnimDict(dict)
         while not HasAnimDictLoaded(dict) do
             Wait(1)
         end
     end
-    TaskPlayAnim(PlayerPedId(), dict, anim, 8.0, 8.0, duration, flag, 0, false, false, false)
+
+    TaskPlayAnim(Ped, dict, anim, 8.0, 8.0, duration, flag, 0, false, false, false)
+    AnimBusy = true
+
     RemoveAnimDict(dict)
 end
 
 ToggleHandsUp = function()
-    local ped = PlayerPedId()
-    if IsEntityPlayingAnim(ped, 'missminuteman_1ig_2', 'handsup_enter', 3) then
-        ClearPedTasks(ped)
-    elseif IsPedOnFoot(ped) then
+    if IsEntityPlayingAnim(Ped, 'missminuteman_1ig_2', 'handsup_enter', 3) then
+        AnimBusy = false
+        ClearPedTasks(Ped)
+    elseif IsPedOnFoot(Ped) and not IsPedCuffed(Ped) and not IsPedDeadOrDying(Ped) and not AnimBusy then
         PlayAnim('missminuteman_1ig_2', 'handsup_enter', -1, 50)
     end
 end
@@ -30,39 +40,17 @@ RevivePlayer = function(closestPlayer)
 		else
 			TriggerServerEvent('glz_interaction:revivePlayer', GetPlayerServerId(closestPlayer))
 		end
-		ClearPedTasks(PlayerPedId())
+        AnimBusy = false
+		ClearPedTasks(Ped)
 	end)
 end
 
 StealPed = function(entity)
     local success = lib.skillCheck('easy')
-    if not success then
-        if not IsPedDeadOrDying(entity) then
-            ClearPedTasksImmediately(entity)
-            TaskReactAndFleePed(entity, cache.ped)
-            TriggerServerEvent('someEventThatHandlePoliceNotifications')
-            lib.notify({
-                title = TranslateCap('police_notify_sent'),
-                duration = 5000,
-                position = 'top',
-                style = {
-                    backgroundColor = '#141517',
-                    color = '#909296'
-                },
-                icon = 'shield-halved',
-                iconColor = '#C53030'
-            })
-        end
-        return
-    end
-    if not NetworkGetEntityIsNetworked(entity) then
-        NetworkRegisterEntityAsNetworked(entity)
-    end
-    local netId = NetworkGetNetworkIdFromEntity(entity)
-	exports.ox_inventory:openInventory('glz:loot', lib.callback.await('glz_interaction:getLoot', false, 'Peds', netId))
+
     if not IsPedDeadOrDying(entity) then
         ClearPedTasksImmediately(entity)
-        TaskReactAndFleePed(entity, cache.ped)
+        TaskReactAndFleePed(entity, Ped)
         TriggerServerEvent('someEventThatHandlePoliceNotifications')
         lib.notify({
             title = TranslateCap('police_notify_sent'),
@@ -76,6 +64,14 @@ StealPed = function(entity)
             iconColor = '#C53030'
         })
     end
+
+    if not success then return end
+
+    if not NetworkGetEntityIsNetworked(entity) then
+        NetworkRegisterEntityAsNetworked(entity)
+    end
+    local netId = NetworkGetNetworkIdFromEntity(entity)
+	exports.ox_inventory:openInventory('glz:loot', lib.callback.await('glz_interaction:getLoot', false, 'Peds', netId))
 end
 
 SearchDumpster = function(entity)
